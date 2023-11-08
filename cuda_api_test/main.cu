@@ -3,9 +3,14 @@
 #include <stdio.h>  
 #include <math.h>  
 #include "cudaInc.h"
-#include "CBenchMarkBase.h"
-
+#include "CTestCUDA.h"
+#include "cuda_runtime.h"
+#include "cuda_runtime_api.h"
+#include "cuda_device_runtime_api.h"
+#include "device_launch_parameters.h"
 int main(int argc, char *argv[])
 {
-	return 0;
+    TestCUDA::CTestCUDA::TestValidity();
+    TestCUDA::CTestCUDA::TestBenchMark();
+    return 0;
 }
