@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <memory.h>
+#include <stdexcept>
 namespace TestCUDA{
 class CTestBase{
     public:
@@ -8,12 +10,12 @@ class CTestBase{
     virtual ~CTestBase(){};
 
     public:
-    static CTestBase *Create(const char *_api_name, const int &_pip_flags);
-    static void DestoryPtr(CTestBase *_ptr);
+    // static CTestBase* CreateSelf(const char *_api_name, const int &_pip_flags);
+    // static void DestoryPtr(CTestBase *_ptr);
     //
     virtual bool RunBenchMarkTest(int argc, char *argv[]);
     //
-    virtual bool SetupTest() = 0;
+    virtual bool SetupTest(const int &_pip_flags) = 0;
     //
     virtual bool SetupBenchMark() = 0;
     //

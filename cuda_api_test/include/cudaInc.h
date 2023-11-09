@@ -11,6 +11,7 @@
 #include "driver_types.h"
 #include <pthread.h>
 #include <signal.h>
+#define TIMEOUT 10000
 // extern std::map<std::string, std::string> g_error_map;
 //  #define CudaSafeCall(error) TestCUDA::cuda_safe_call(error, __FILE__, __LINE__)
 #define CudaSafeCall(error, T) TestCUDA::cuda_safe_call<T>(error, __FILE__, __LINE__, #error)
@@ -52,7 +53,7 @@ namespace TestCUDA
 		FuncPara<T, Fn> *para = (FuncPara<T, Fn> *)(_arg);
 		para->error = (cudaError_t)para->call();
 
-		// ·¢½áÊøÐÅºÅ;
+		// å‘ç»“æŸä¿¡å·;
 		pthread_mutex_lock(para->g_mutex);
 		pthread_cond_signal(para->g_cond);
 		pthread_mutex_unlock(para->g_mutex);
@@ -89,7 +90,7 @@ namespace TestCUDA
 
 		struct timespec start_tm;
 		struct timespec end_tm;
-		int timeout_ms = 0;
+		int timeout_ms = TIMEOUT;
 
 		clock_gettime(CLOCK_REALTIME, &start_tm);
 		end_tm = ns_to_tm(tm_to_ns(start_tm) + timeout_ms * 1000000);

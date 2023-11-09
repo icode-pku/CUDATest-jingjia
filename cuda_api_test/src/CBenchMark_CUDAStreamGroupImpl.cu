@@ -1,10 +1,12 @@
 #include "cudaInc.h"
 #include <iostream>
 #include "CBenchMark_CUDAStreamGroupImpl.h"
+#include "CTestCUDAFactory.h"
 #define N (1024 * 1024)
 #define FULL_DATA_SIZE N * 20
 namespace TestCUDA
 {
+	REGISTER_TEST_OBJECT(CBenchMark_CUDAStreamGroupImpl, CUDA_STREAM_GROUP);
 	__global__ void kernelAdd(int *a, int *b, int *c)
 	{
 		int threadID = blockIdx.x * blockDim.x + threadIdx.x;
@@ -15,10 +17,9 @@ namespace TestCUDA
 		}
 	}
 
-	bool CBenchMark_CUDAStreamGroupImpl::SetupTest() 
+	bool CBenchMark_CUDAStreamGroupImpl::SetupTest(const int &_pip_flags) 
 	{
-		try
-		{
+		try{
 			(CTestBase *)(this)->Log("cudaStreamCreate in...");
 
 			cudaStream_t stream;
@@ -72,13 +73,12 @@ namespace TestCUDA
 		}
 		catch (CBenchMark_CUDAStreamGroupImpl &err)
 		{
-			(CTestBase *)(this)->Log(err.what());
-			this->AddError(err.what(), this->m_pip_flags);
+			Log(err.what());
+			AddError(err.what(), _pip_flags);
 		}
 		catch(...){
-			this->AddError("CUDA_STREAM_GROUP exception!!", this->m_pip_flags);
+			AddError("CUDA_STREAM_GROUP exception!!", this->m_pip_flags);
 		}
-		//CudaKernelCheck(CBenchMark_CUDAStreamGroupImpl);
 		return true;
 	}
 

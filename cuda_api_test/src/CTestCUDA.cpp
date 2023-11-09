@@ -5,15 +5,31 @@
 #include <unistd.h>
 #include "CProcessManager.h"
 #include "cudaInc.h"
+#include "CTestCUDAFactory.h"
 namespace TestCUDA
 {
-    static void TestValidity_StreamGroup(const int &_pip_flags)
+
+    static void TestValidityFunc(const char *_test_group, const int &_pip_flags)
     {
-        bool bRet = true;
-        TestCUDA::CTestBase *pTestBase = TestCUDA::CTestBase::Create(CUDA_STREAM_GROUP, _pip_flags);
-        bRet &= pTestBase->SetupTest();
-        TestCUDA::CTestBase::DestoryPtr(pTestBase);
+        try
+        {
+            bool bRet = true;
+            std::shared_ptr<TestCUDA::CTestBase> pTestBase = CTestCUDAFactory::GetInstance().Create_shared(_test_group);
+            if (pTestBase != nullptr)
+            {
+                pTestBase->SetupTest(_pip_flags);
+            }
+            else
+            {
+                printf("Invalid object!!\n");
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << '\n';
+        }
     }
+
     bool CTestCUDA::TestValidity()
     {
         std::vector<std::string> error_vec;
@@ -24,19 +40,31 @@ namespace TestCUDA
             perror("pipe error!");
             return false;
         }
-        std::function<void(const int &)> fn = TestValidity_StreamGroup;
-        if (CProcessManager::CreateProcess(fn, pipe_flags[1]) > 0)
+        
+        std::map<std::string, std::function<CTestBase *()>>::iterator iter = CTestCUDAFactory::GetInstance().map_.begin();
+        for (; iter != CTestCUDAFactory::GetInstance().map_.end(); iter++)
         {
-            // processManager.AddProcess(CUDA_STREAM_GROUP, );
+            ProcessOneGroup(iter->first.c_str(), pipe_flags);
+        }
+
+        return true;
+    }
+
+    void CTestCUDA::ProcessOneGroup(const char *_group_desc, const int *_pipe_flags)
+    {
+        std::function<void(const char *, const int &)> fn = TestValidityFunc;
+        if (CProcessManager::CreateProcess(fn, _group_desc, _pipe_flags[1]) > 0)
+        {
             printf("main id: %d\n", getpid());
+            close(_pipe_flags[1]);
             // 父进程---读取
             char buffer[64] = {0};
             while (1)
             {
-                ssize_t s = read(pipe_flags[0], buffer, sizeof(buffer));
+                ssize_t s = read(_pipe_flags[0], buffer, sizeof(buffer));
                 if (s == 0)
                 {
-                    printf("main pro\n");
+                    printf("main\n");
                     break;
                 }
                 else if (s > 0)
@@ -47,20 +75,10 @@ namespace TestCUDA
                     kill(id, SIGKILL);
                     break;
                 }
-                else
-                {
-                    break;
-                }
             }
-            cudaGetLastError();
-            printf("over!!\n");
-            for (int i = 0; i < error_vec.size(); ++i)
-            { // 可序列化
-                std::cout << error_vec[i].c_str() << std::endl;
-            }
-        }
 
-        return true;
+            printf("over!!%d\n", getpid());
+        }
     }
     bool CTestCUDA::TestBenchMark()
     {

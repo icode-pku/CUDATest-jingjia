@@ -17,13 +17,13 @@ public:
     }
 
 public:
-    static int CreateProcess(std::function<void(const int &)> &_fn, const int &_pip_flags)
+    static int CreateProcess(std::function<void(const char *, const int &)> &_fn, const char *_test_group, const int &_pip_flags)
     {
         int nRet = fork();
         if (nRet == 0)
         {
-            _fn(_pip_flags);
-            return getpid();
+            _fn(_test_group, _pip_flags);
+            return 0;
         }
         return nRet;
     }

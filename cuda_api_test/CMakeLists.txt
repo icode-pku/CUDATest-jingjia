@@ -20,6 +20,7 @@ set(CUDA_ENABLE true)
 if(CUDA_ENABLE)
     enable_language(CUDA)
 endif()
+add_compile_options(-fPIC)
 set(CUDA_INCLUDE_DIR ${CUDA_ROOT_DIR}/include/)
 set(CUDA_LIBRARY_DIR ${CUDA_ROOT_DIR}/lib64)
 set(CUDA_RUNTIME_INCLUDE_DIR ${CUDA_ROOT_DIR}/targets/x86_64-linux/include)
@@ -49,9 +50,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/)
 file(GLOB ${PROJECT_NAME}_SRC_LIST 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu)
-MESSAGE(" --SRC : " ${${PROJECT_NAME}_SRC_LIST})
-add_library(${PROJECT_NAME} ${${PROJECT_NAME}_SRC_LIST})
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
+
+MESSAGE(" --SOURCES : " ${SOURCES})
+MESSAGE(" --${PROJECT_NAME}_SRC_LIST  : " ${${PROJECT_NAME}_SRC_LIST})
+add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}_SRC_LIST})
 target_link_libraries(${PROJECT_NAME} ${CUDA_LIBS} ${banchmark_LIBS} ${GTest_LIBS} ${protobuf_LIBS} ${CUDA_RUNTIME_LIBS})
 
 include_directories(${CUDA_INCLUDE_DIR}
@@ -61,5 +65,6 @@ ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/*.h
 ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
 MESSAGE("--test_SRC_LIST: " ${test_SRC_LIST})
+
 add_executable(test ${test_SRC_LIST})
-target_link_libraries(test ${CUDA_LIBS} ${banchmark_LIBS} ${GTest_LIBS} ${protobuf_LIBS} ${CUDA_RUNTIME_LIBS} ${PROJECT_NAME})
+target_link_libraries(test ${CUDA_LIBS} ${CUDA_RUNTIME_LIBS} ${PROJECT_NAME})

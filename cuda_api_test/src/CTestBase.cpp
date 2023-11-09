@@ -1,5 +1,5 @@
 #include "TestDefine.h"
-#include "CBenchMark_CUDAStreamGroupImpl.h"
+//#include "CBenchMark_CUDAStreamGroupImpl.h"
 #include "CTestBase.h"
 #include "benchmark/benchmark.h"
 #include <iostream>
@@ -9,30 +9,48 @@
 #include <unistd.h>
 namespace TestCUDA
 {
-   CTestBase *CTestBase::Create(const char *_api_name, const int &_pip_flags)
-   {
-      if (strcmp(_api_name, CUDA_STREAM_GROUP) == 0)
-      {
-         return new CBenchMark_CUDAStreamGroupImpl(CUDA_STREAM_GROUP, "", _pip_flags);
-      }
-      else
-      {
-         return nullptr;
-      }
-   }
-   void CTestBase::DestoryPtr(CTestBase *_ptr)
-   {
-      if (_ptr != nullptr)
-      {
-         delete _ptr;
-         _ptr = nullptr;
-      }
-   }
+   
+   // CTestBase* CTestBase::CreateSelf(const char *_api_name, const int &_pip_flags)
+   // {
+   //    try
+   //      {
+   //          bool bRet = true;
+   //          std::shared_ptr<TestCUDA::CTestBase> pTestBase = CTestCUDAFactory::Create_shared(_api_name);
+   //          if (pTestBase != nullptr)
+   //          {
+   //              pTestBase->SetupTest();
+   //          }
+   //          else
+   //          {
+   //              printf("Invalid object!!\n");
+   //          }
+   //      }
+   //      catch (const std::exception &e)
+   //      {
+   //          std::cerr << e.what() << '\n';
+   //      }
+   //    // if (strcmp(_api_name, CUDA_STREAM_GROUP) == 0)
+   //    // {
+   //    //    return new CBenchMark_CUDAStreamGroupImpl(CUDA_STREAM_GROUP, "", _pip_flags);
+   //    // }
+   //    // else
+   //    // {
+   //    //    return nullptr;
+   //    // }
+   // }
+   // void CTestBase::DestoryPtr(CTestBase *_ptr)
+   // {
+   //    if (_ptr != nullptr)
+   //    {
+   //       delete _ptr;
+   //       _ptr = nullptr;
+   //    }
+   // }
    bool CTestBase::RunBenchMarkTest(int argc, char *argv[])
    {
-      benchmark::Initialize(&argc, argv);
-      benchmark::RunSpecifiedBenchmarks();
-      benchmark::Shutdown();
+      //benchmark::Initialize(&argc, argv);
+      //benchmark::RunSpecifiedBenchmarks();
+      //benchmark::Shutdown();
       return true;
    }
 
