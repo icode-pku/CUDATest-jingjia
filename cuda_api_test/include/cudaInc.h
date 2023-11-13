@@ -4,6 +4,7 @@
 #include <string.h>
 #include <functional>
 #include <stdexcept>
+#include "cuda.h"
 #include "cuda_runtime.h"
 #include "cuda_runtime_api.h"
 #include "cuda_device_runtime_api.h"
@@ -14,16 +15,14 @@
 #define TIMEOUT 10000
 // extern std::map<std::string, std::string> g_error_map;
 //  #define CudaSafeCall(error) TestCUDA::cuda_safe_call(error, __FILE__, __LINE__)
-#define CudaSafeCall(error, T) TestCUDA::cuda_safe_call<T>(error, __FILE__, __LINE__, #error)
+#define CudaSafeCall(error) TestCUDA::cuda_safe_call(error, __FILE__, __LINE__, #error)
 
 #define CudaSafeCallEx(call, T) TestCUDA::cuda_safe_callx<T>([&] { return (call); }, __FILE__, __LINE__, #call)
 
-#define CudaKernelCheck(T) CudaSafeCall(cudaGetLastError(), T)
+#define CudaKernelCheck() CudaSafeCall(cudaGetLastError())
 
 namespace TestCUDA
 {
-
-	template <typename T>
 	inline void cuda_safe_call(cudaError error, const char *file, const int line, const char *_code_str)
 	{
 
@@ -33,8 +32,7 @@ namespace TestCUDA
 			std::string error_code(_code_str);
 			std::string sub_str = error_code.substr(0, error_code.find_first_of("("));
 			std::string result_str = sub_str + " " + cudaGetErrorString(error);
-			T t(sub_str.c_str(), result_str.c_str());
-			throw t;
+			throw result_str.c_str();
 		}
 	}
 	template <typename T, class Fn>
@@ -106,7 +104,9 @@ namespace TestCUDA
 			pthread_mutex_destroy(&g_mutex);
 			std::string error_code(_code_str);
 			std::string sub_str = error_code.substr(0, error_code.find_first_of("("));
-			T t(sub_str.c_str(), "connect time out!");
+			const char *api_name = strdup(sub_str.c_str());
+			//printf("222id:%d,api:%s,error:%s\n",getpid(),api_name,_code_str);
+			T t(api_name, "connect time out!");
 			throw t;
 		}
 		else
@@ -119,7 +119,9 @@ namespace TestCUDA
 				std::string error_code(_code_str);
 				std::string sub_str = error_code.substr(0, error_code.find_first_of("("));
 				std::string result_str = sub_str + " " + cudaGetErrorString(para.error);
-				T t(sub_str.c_str(), result_str.c_str());
+				const char *api_name = strdup(sub_str.c_str());
+				const char *error = strdup(result_str.c_str());
+				T t(api_name, error);
 				throw t;
 			}
 		}

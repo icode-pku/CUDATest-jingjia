@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 namespace TestCUDA
 {
     class CTestCUDA
@@ -10,7 +11,9 @@ namespace TestCUDA
     public:
         static bool TestValidity();
         static bool TestBenchMark();
+
     protected:
-        static void ProcessOneGroup(const char *_group_desc, const int *_pipe_flags);
+        static int ProcessOneGroup(const char *_group_desc, const int *_pipe_flags, std::map<char *, char *> &_error_api_name);
+        static void SerializeResult(std::map<char *, char *> &_error_api_name);
     };
 }

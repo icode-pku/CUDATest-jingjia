@@ -56,7 +56,7 @@ namespace TestCUDA
 
    bool CTestBase::Log(const char *_logStr)
    {
-      m_log_str.push_back(std::string(_logStr));
+      m_log_str.push_back(_logStr);
       return true;
    }
 
@@ -64,12 +64,12 @@ namespace TestCUDA
    {
       if (_logFileName == nullptr)
       {
-         std::cout << "*******API Name: " << m_api_name.c_str() << " begin******" << std::endl;
+        std::cout << "*******API Name: " << m_api_name << " begin******" << std::endl;
          for (size_t i = 0; i < m_log_str.size(); i++)
          {
-            std::cout << m_log_str[i].c_str() << std::endl;
+            std::cout << m_log_str[i] << std::endl;
          }
-         std::cout << "*******API Name: " << m_api_name.c_str() << " end******" << std::endl;
+         std::cout << "*******API Name: " << m_api_name << " end******" << std::endl;
       }
       else
       {
@@ -78,10 +78,10 @@ namespace TestCUDA
          {
             return false;
          }
-         fout << m_api_name.c_str() << std::endl;
+         fout << m_api_name << std::endl;
          for (size_t i = 0; i < m_log_str.size(); i++)
          {
-            fout << m_log_str[i].c_str() << std::endl;
+            fout << m_log_str[i] << std::endl;
          }
 
          fout.close();
@@ -89,15 +89,39 @@ namespace TestCUDA
 
       return true;
    }
-   void CTestBase::AddError(const std::string &_error, const int &_pip_flags)
+   void CTestBase::AddError(const char *_error)
    {
       std::string str = std::to_string(getpid());
       str += std::string(":") + std::string(_error);
-      write(_pip_flags, str.c_str(), strlen(str.c_str())); //
+      const char *result = strdup(str.c_str());
+      printf("m_pip_flags: %d\n",m_pip_flags);
+      write(m_pip_flags, result, strlen(result)); 
       m_error_api.push_back(_error);
    }
-   std::vector<std::string> CTestBase::GetError()
+   std::vector<const char*> CTestBase::GetError()
    {
       return m_error_api;
    }
+   bool CTestBase::SetName(const char *_api_name)
+	{
+      m_api_name.reset(new char [strlen(_api_name) + 1]);
+		strcpy(m_api_name.get(), _api_name);
+		return true;
+	}
+   bool CTestBase::SetError(const char *_error){
+      m_error.reset(new char [strlen(_error) + 1]);
+		strcpy(m_error.get(), _error);
+      return true;
+   }
+   bool CTestBase::SetPipFlags(const int &_flags){
+      m_pip_flags = _flags;
+   }
+	const char *CTestBase::what()
+	{
+		std::string result = std::string(m_error.get());
+		result += ":";
+		result += this->m_api_name.get();
+		const char *error_ch = strdup(result.c_str());
+		return error_ch;
+	}
 }

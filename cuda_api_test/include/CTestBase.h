@@ -1,12 +1,12 @@
 #pragma once
 #include <vector>
 #include <string>
-#include <memory.h>
+#include <memory>
 #include <stdexcept>
 namespace TestCUDA{
-class CTestBase{
+class CTestBase :public std::exception{
     public:
-    CTestBase(){};
+    CTestBase() = default;
     virtual ~CTestBase(){};
 
     public:
@@ -15,23 +15,31 @@ class CTestBase{
     //
     virtual bool RunBenchMarkTest(int argc, char *argv[]);
     //
-    virtual bool SetupTest(const int &_pip_flags) = 0;
+    virtual bool SetupTest() = 0;
     //
     virtual bool SetupBenchMark() = 0;
     //
-    virtual bool SetName(const char *_api_name) = 0;
+    virtual bool SetName(const char *_api_name);
+    //
+    virtual bool SetError(const char *_error);
+    //
+    virtual bool SetPipFlags(const int &_flags);
     //
     virtual bool Log(const char *_logStr);
     //
     virtual bool PrintLog(const char *_logFileName = nullptr);
     //
-    virtual void AddError(const std::string &_error, const int &_pip_flags);
+    virtual void AddError(const char *_error);
     //
-    virtual std::vector<std::string> GetError();
+    virtual const char *what();
+    //
+    virtual std::vector<const char*> GetError();
      
     protected:
-    std::vector<std::string> m_log_str;
-    std::string m_api_name;
-    std::vector<std::string> m_error_api;
+    std::shared_ptr<char> m_api_name;
+    std::shared_ptr<char> m_error;
+    int m_pip_flags;
+    std::vector<const char*> m_log_str;
+    std::vector<const char *> m_error_api;
 };
 }
