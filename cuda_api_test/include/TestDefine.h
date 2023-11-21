@@ -15,7 +15,9 @@ namespace TestCUDA
         AddError("exception error!!"); \
     }
 
-#define END_SUCESS(flags) AddError("SUCESS!"); 
+#define END_SUCESS(flags) AddError("SUCESS!")
 #define CUDA_STREAM_GROUP "cuda_stream_group"
 #define CUDA_EVENT_GROUP "cuda_event_group"
+#define CUDA_MEM_GROUP "cuda_mem_group"
+#define CUDA_DEVICE_GROUP "cuda_device_group"
 };

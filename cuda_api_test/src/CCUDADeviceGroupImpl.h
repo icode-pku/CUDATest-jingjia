@@ -3,18 +3,18 @@
 #include "TestDefine.h"
 namespace TestCUDA
 {
-    class CCUDAEventGroupImpl : public CTestBase
+    class CCUDADeviceGroupImpl : public CTestBase
     {
     public:
-        CCUDAEventGroupImpl(const char *_api_name, const char *_error = nullptr)
+        CCUDADeviceGroupImpl(const char *_api_name, const char *_error = nullptr)
         {
             SetName(_api_name);
             SetError(_error);
         };
-        CCUDAEventGroupImpl()
+        CCUDADeviceGroupImpl()
         {
         }
-        virtual ~CCUDAEventGroupImpl()
+        virtual ~CCUDADeviceGroupImpl()
         {
         }
 

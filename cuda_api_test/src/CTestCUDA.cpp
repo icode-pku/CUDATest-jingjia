@@ -6,10 +6,12 @@
 #include "CProcessManager.h"
 #include "cudaInc.h"
 #include "CTestCUDAFactory.h"
+#include "Logger.h"
+#include "CCUDAMemGroupImpl.h"
 namespace TestCUDA
 {
 
-    static void TestValidityFunc(const char *_test_group, const int &_pip_flags)
+    static void TestValidityFunc(const char *_test_group, const int _pip_flags)
     {
         try
         {
@@ -17,13 +19,14 @@ namespace TestCUDA
             std::shared_ptr<TestCUDA::CTestBase> pTestBase = CTestCUDAFactory::GetInstance().Create_shared(_test_group);
             if (pTestBase != nullptr)
             {
+                pTestBase->SetName(_test_group);
                 pTestBase->SetPipFlags(_pip_flags);
                 pTestBase->SetupTest();
-                //pTestBase->PrintLog();
+                pTestBase->SerializeResult();
             }
             else
             {
-                printf("Invalid object!!\n");
+                LOG_INFO("Invalid object!!\n");
             }
         }
         catch (const std::exception &e)
@@ -32,21 +35,30 @@ namespace TestCUDA
         }
     }
 
-    bool CTestCUDA::TestValidity()
+    bool CTestCUDA::TestValidity(const char *_cuda_api_group)
     {
+
         std::vector<std::string> error_vec;
         CProcessManager processManager;
 
-        printf("共有API簇:%d\n", CTestCUDAFactory::GetInstance().map_.size());
-        std::map<char *, char *> _error_api_names;
-        std::map<std::string, std::function<CTestBase *()>>::iterator iter = CTestCUDAFactory::GetInstance().map_.begin();
+        LOG_INFO("total api group num:%d\n", CTestCUDAFactory::GetInstance().map_.size());
+        std::map<std::string, std::string> _error_api_names;
+        std::map<std::string, std::function<CTestCUDAFactory::ptr_type()>>::iterator iter = CTestCUDAFactory::GetInstance().map_.begin();
         for (; iter != CTestCUDAFactory::GetInstance().map_.end();)
         {
-            printf("正在处理:%s,id:%d\n", iter->first.c_str(), getpid());
+            if (_cuda_api_group != nullptr)
+            {
+                if (strcmp(_cuda_api_group, iter->first.c_str()) != 0)
+                {
+                    iter++;
+                    continue;
+                }
+            }
+            LOG_INFO("processing :%s,id:%d\n", iter->first.c_str(), getpid());
             int pipe_flags[2] = {0};
             if (pipe(pipe_flags) != 0)
             {
-                perror("pipe error!");
+                LOG_ERROR("pipe error!");
                 return false;
             }
             int nRet = ProcessOneGroup(iter->first.c_str(), pipe_flags, _error_api_names);
@@ -57,13 +69,12 @@ namespace TestCUDA
             iter++;
         }
         SerializeResult(_error_api_names);
-
         return true;
     }
 
-    int CTestCUDA::ProcessOneGroup(const char *_group_desc, const int *_pipe_flags, std::map<char *, char *> &_error_api_name)
+    int CTestCUDA::ProcessOneGroup(const char *_group_desc, const int *_pipe_flags, std::map<std::string, std::string> &_error_api_name)
     {
-        std::function<void(const char *, const int &)> fn = TestValidityFunc;
+        std::function<void(const char *, const int)> fn = TestValidityFunc;
         if (CProcessManager::CreateProcess(fn, _group_desc, _pipe_flags) > 0)
         {
             close(_pipe_flags[1]);
@@ -84,13 +95,13 @@ namespace TestCUDA
                     int id = std::atoi(std::string(buffer).substr(0, first).c_str());
                     std::string error_api = std::string(buffer).substr(end + 1, std::string(buffer).size());
                     std::string error = std::string(buffer).substr(first + 1, end - first - 1);
-                    _error_api_name.insert(std::make_pair(strdup(error_api.c_str()), strdup(error.c_str())));
-                    //kill(id, SIGKILL);
+                    _error_api_name.insert(std::make_pair(error_api, error));
+                    // kill(id, SIGKILL);
                     continue;
                 }
                 else
                 {
-                    printf("main ID:%d\n", getpid());
+                    LOG_INFO("main ID:%d\n", getpid());
                     continue;
                 }
             }
@@ -101,12 +112,12 @@ namespace TestCUDA
             return 0;
         }
     }
-    void CTestCUDA::SerializeResult(std::map<char *, char *> &_error_api_name)
+    void CTestCUDA::SerializeResult(std::map<std::string, std::string> &_error_api_name)
     {
-        std::map<char *, char *>::iterator iter = _error_api_name.begin();
+        std::map<std::string, std::string>::iterator iter = _error_api_name.begin();
         for (; iter != _error_api_name.end(); iter++)
         {
-            std::cout << "api: " << iter->first << " error: " << iter->second << std::endl;
+            std::cout << "api: " << iter->first << " status: " << iter->second << std::endl;
         }
     }
     bool CTestCUDA::TestBenchMark()

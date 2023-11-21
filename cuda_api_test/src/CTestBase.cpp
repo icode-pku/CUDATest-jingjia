@@ -1,5 +1,5 @@
 #include "TestDefine.h"
-//#include "CBenchMark_CUDAStreamGroupImpl.h"
+// #include "CBenchMark_CUDAStreamGroupImpl.h"
 #include "CTestBase.h"
 #include "benchmark/benchmark.h"
 #include <iostream>
@@ -9,48 +9,12 @@
 #include <unistd.h>
 namespace TestCUDA
 {
-   
-   // CTestBase* CTestBase::CreateSelf(const char *_api_name, const int &_pip_flags)
-   // {
-   //    try
-   //      {
-   //          bool bRet = true;
-   //          std::shared_ptr<TestCUDA::CTestBase> pTestBase = CTestCUDAFactory::Create_shared(_api_name);
-   //          if (pTestBase != nullptr)
-   //          {
-   //              pTestBase->SetupTest();
-   //          }
-   //          else
-   //          {
-   //              printf("Invalid object!!\n");
-   //          }
-   //      }
-   //      catch (const std::exception &e)
-   //      {
-   //          std::cerr << e.what() << '\n';
-   //      }
-   //    // if (strcmp(_api_name, CUDA_STREAM_GROUP) == 0)
-   //    // {
-   //    //    return new CBenchMark_CUDAStreamGroupImpl(CUDA_STREAM_GROUP, "", _pip_flags);
-   //    // }
-   //    // else
-   //    // {
-   //    //    return nullptr;
-   //    // }
-   // }
-   // void CTestBase::DestoryPtr(CTestBase *_ptr)
-   // {
-   //    if (_ptr != nullptr)
-   //    {
-   //       delete _ptr;
-   //       _ptr = nullptr;
-   //    }
-   // }
+
    bool CTestBase::RunBenchMarkTest(int argc, char *argv[])
    {
-      //benchmark::Initialize(&argc, argv);
-      //benchmark::RunSpecifiedBenchmarks();
-      //benchmark::Shutdown();
+      // benchmark::Initialize(&argc, argv);
+      // benchmark::RunSpecifiedBenchmarks();
+      // benchmark::Shutdown();
       return true;
    }
 
@@ -64,10 +28,10 @@ namespace TestCUDA
    {
       if (_logFileName == nullptr)
       {
-        std::cout << "*******API Name: " << m_api_name << " begin******" << std::endl;
+         std::cout << "*******API Name: " << m_api_name << " begin******" << std::endl;
          for (size_t i = 0; i < m_log_str.size(); i++)
          {
-            std::cout << m_log_str[i] << std::endl;
+            std::cout << m_log_str[i].c_str() << std::endl;
          }
          std::cout << "*******API Name: " << m_api_name << " end******" << std::endl;
       }
@@ -81,7 +45,7 @@ namespace TestCUDA
          fout << m_api_name << std::endl;
          for (size_t i = 0; i < m_log_str.size(); i++)
          {
-            fout << m_log_str[i] << std::endl;
+            fout << m_log_str[i].c_str() << std::endl;
          }
 
          fout.close();
@@ -94,34 +58,77 @@ namespace TestCUDA
       std::string str = std::to_string(getpid());
       str += std::string(":") + std::string(_error);
       const char *result = strdup(str.c_str());
-      printf("m_pip_flags: %d\n",m_pip_flags);
-      write(m_pip_flags, result, strlen(result)); 
-      m_error_api.push_back(_error);
+      write(m_pip_flags, result, strlen(result));
+      m_error_api.insert(_error);
    }
-   std::vector<const char*> CTestBase::GetError()
+   std::set<std::string> CTestBase::GetError()
    {
-      return m_error_api;
+      return std::set<std::string>();//m_error_api;
    }
    bool CTestBase::SetName(const char *_api_name)
-	{
-      m_api_name.reset(new char [strlen(_api_name) + 1]);
-		strcpy(m_api_name.get(), _api_name);
-		return true;
-	}
-   bool CTestBase::SetError(const char *_error){
-      m_error.reset(new char [strlen(_error) + 1]);
-		strcpy(m_error.get(), _error);
+   {
+      m_api_name.reset(new char[strlen(_api_name) + 1]);
+      strcpy(m_api_name.get(), _api_name);
       return true;
    }
-   bool CTestBase::SetPipFlags(const int &_flags){
+   bool CTestBase::SetError(const char *_error)
+   {
+      m_error.reset(new char[strlen(_error) + 1]);
+      strcpy(m_error.get(), _error);
+      return true;
+   }
+   bool CTestBase::SetPipFlags(const int _flags)
+   {
       m_pip_flags = _flags;
    }
-	const char *CTestBase::what()
-	{
-		std::string result = std::string(m_error.get());
-		result += ":";
-		result += this->m_api_name.get();
-		const char *error_ch = strdup(result.c_str());
-		return error_ch;
-	}
+   const char *CTestBase::what()
+   {
+      std::string result = std::string(m_error.get());
+      result += ":";
+      result += this->m_api_name.get();
+      const char *error_ch = strdup(result.c_str());
+      return error_ch;
+   }
+   bool CTestBase::SetupTest()
+   {
+      BEGIN_EXCEPTION
+      Test_normal();
+      Test_NonNormal();
+      END_EXCEPTION(CTestBase);
+      return true;
+   }
+   void CTestBase::Add(const std::string &_api_name)
+   {
+      this->m_success_api.insert(_api_name);
+   }
+   void CTestBase::SerializeResult(const char *_result_fileName)
+   {
+      if (m_api_name.get() == nullptr)
+      {
+         return;
+      }
+      std::string fileName = std::string(m_api_name.get()) + "_cuda_api_test_result.csv";
+      if (_result_fileName != nullptr)
+      {
+         fileName = std::string(_result_fileName);
+      }
+      std::ofstream fout(fileName.c_str(), std::ios::out);
+      if (fout.fail())
+      {
+         return;
+      }
+      fout << "SUCCESS API:" << std::endl;
+      std::set<std::string>::iterator iter = this->m_success_api.begin();
+      for (; iter != this->m_success_api.end(); iter++)
+      {
+         fout << iter->c_str() << std::endl;
+      }
+      fout << "Error API:" << std::endl;
+      iter = this->m_error_api.begin();
+      for (; iter != this->m_error_api.end(); iter++)
+      {
+         fout << iter->c_str() << std::endl;
+      }
+      fout.close();
+   }
 }

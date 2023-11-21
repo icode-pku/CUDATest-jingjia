@@ -9,6 +9,7 @@
 #include "cuda_runtime_api.h"
 #include "cuda_device_runtime_api.h"
 #include "device_launch_parameters.h"
+#include "driver_functions.h"
 #include "driver_types.h"
 #include <pthread.h>
 #include <signal.h>
@@ -18,6 +19,8 @@
 #define CudaSafeCall(error) TestCUDA::cuda_safe_call(error, __FILE__, __LINE__, #error)
 
 #define CudaSafeCallEx(call, T) TestCUDA::cuda_safe_callx<T>([&] { return (call); }, __FILE__, __LINE__, #call)
+
+#define CudaIsSafeCall(call, T) Add(CudaSafeCallEx(call, T))
 
 #define CudaKernelCheck() CudaSafeCall(cudaGetLastError())
 
@@ -71,7 +74,7 @@ namespace TestCUDA
 	}
 	
 	template <typename T, class Fn>
-	inline void cuda_safe_callx(Fn &&call, const char *file, const int line, const char *_code_str)
+	inline std::string cuda_safe_callx(Fn &&call, const char *file, const int line, const char *_code_str)
 	{
 		pthread_cond_t g_cond;
 		pthread_mutex_t g_mutex;
@@ -105,7 +108,6 @@ namespace TestCUDA
 			std::string error_code(_code_str);
 			std::string sub_str = error_code.substr(0, error_code.find_first_of("("));
 			const char *api_name = strdup(sub_str.c_str());
-			//printf("222id:%d,api:%s,error:%s\n",getpid(),api_name,_code_str);
 			T t(api_name, "connect time out!");
 			throw t;
 		}
@@ -123,6 +125,10 @@ namespace TestCUDA
 				const char *error = strdup(result_str.c_str());
 				T t(api_name, error);
 				throw t;
+			}else{
+				std::string error_code(_code_str);
+				std::string sub_str = error_code.substr(0, error_code.find_first_of("("));
+				return sub_str;
 			}
 		}
 

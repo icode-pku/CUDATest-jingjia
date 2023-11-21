@@ -10,7 +10,7 @@ namespace TestCUDA
         {
             SetName(_api_name);
             SetError(_error);
-            //AddError(_error);
+            // AddError(_error);
         };
         CCUDAStreamGroupImpl()
         {
@@ -20,16 +20,8 @@ namespace TestCUDA
         }
 
     public:
-        //
-        virtual bool SetupTest();
-        //
-        virtual bool SetupBenchMark();
-       
-
-    protected:
-        void Test_normal();
-        void Test_NonNormal();
-
+        virtual void Test_normal();
+        virtual void Test_NonNormal();
     };
 
 }
